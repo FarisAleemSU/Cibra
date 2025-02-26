@@ -2,10 +2,13 @@
 A term project for the CS310 Course at Sabanci University.
 
 Application Name: What is the name of your app?
+  -
+  
 Group member's name and ID
-  -Faris Aleem Ahmad 33570
-  -Ayesha
-  -Emre
+  -
+  Faris Aleem Ahmad 33570
+  Ayesha
+  Emre
   
 Main Purpose: What problem does your app solve?
   -
