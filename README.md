@@ -7,7 +7,7 @@ Application Name: What is the name of your app?
 Group member's name and ID
   -
   Faris Aleem Ahmad 33570
-  Ayesha
+  Ayesha Musharaf 33617
   Emre
   
 Main Purpose: What problem does your app solve?
