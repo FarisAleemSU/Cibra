@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "241711487489",
+    "project_id": "cibra-80b9f",
+    "storage_bucket": "cibra-80b9f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:241711487489:android:b4ce3a47ad60ecb7e63e00",
+        "android_client_info": {
+          "package_name": "com.recipe.cibra"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBnkKRacGfAD8hKbEUAHhT2jpLNc8YdbDg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
