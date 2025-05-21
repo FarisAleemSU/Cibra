@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'dart:io';
-
 import '../models/recipe.dart';
-import '../providers/recipe_provider.dart';
 import 'edit_recipe.dart';
+import 'dart:io';
 
 class RecipeDetailScreen extends StatefulWidget {
   final Recipe recipe;
@@ -50,9 +47,10 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       builder: (_) => EditRecipeScreen(recipe: _recipe),
                     ),
                   );
-                  if (updatedRecipe != null && updatedRecipe is Recipe) {
-                    setState(() => _recipe = updatedRecipe);
-                    Provider.of<RecipeProvider>(context, listen: false).updateRecipe(updatedRecipe);
+                  if (updatedRecipe != null) {
+                    setState(() {
+                      _recipe = updatedRecipe;
+                      });
                   }
                 },
               )
@@ -92,16 +90,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     }
 
     return imageUrl.startsWith('http')
-        ? Image.network(
-            imageUrl,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _imageFallback(),
-          )
-        : Image.file(
-            File(imageUrl),
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _imageFallback(),
-          );
+        ? Image.network(imageUrl, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _imageFallback())
+        : Image.file(File(imageUrl), fit: BoxFit.cover, errorBuilder: (_, __, ___) => _imageFallback());
   }
 
   Widget _imageFallback() {
@@ -121,10 +111,10 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     if (_recipe.difficulty.isNotEmpty) {
       infoChips.add(_buildInfoChip(context, Icons.speed, _recipe.difficulty));
     }
-    if (_recipe.servings?.isNotEmpty == true) {
+    if (_recipe.servings != null && _recipe.servings!.isNotEmpty) {
       infoChips.add(_buildInfoChip(context, Icons.restaurant_menu, '${_recipe.servings} servings'));
     }
-    if (_recipe.calories?.isNotEmpty == true) {
+    if (_recipe.calories != null && _recipe.calories!.isNotEmpty) {
       infoChips.add(_buildInfoChip(context, Icons.local_fire_department, '${_recipe.calories} kcal'));
     }
 

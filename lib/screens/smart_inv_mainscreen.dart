@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'inventory_edit_screen.dart';
 import 'grocery_edit_screen.dart';
+import '../theme.dart';
 import '../services/firestore_service.dart';
 
 class SmartInventoryMainScreen extends StatefulWidget {

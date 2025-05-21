@@ -16,10 +16,10 @@ final ThemeData appTheme = ThemeData(
   colorScheme: ColorScheme.light(
     primary: Color(0xFF6C5CE7),       // Muted Indigo
     secondary: Color(0xFF6C5CE7),     // Same for simplicity
-    surface: Color(0xFFFAFAFA),    // Light background
+    background: Color(0xFFFAFAFA),    // Light background
     onPrimary: Colors.white,          // Text/icon color on indigo
     onSecondary: Colors.white,
-    onSurface: Color(0xFF1C1C1E),  // Text on background
+    onBackground: Color(0xFF1C1C1E),  // Text on background
   ),
   textTheme: const TextTheme(
     bodyLarge: TextStyle(color: Color(0xFF1C1C1E)),
@@ -32,12 +32,12 @@ final ThemeData appTheme = ThemeData(
     foregroundColor: Colors.white,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(16))),
   ),
-  cardTheme: CardTheme(
-    color: Colors.white,
-    elevation: 1,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    shadowColor: Colors.black.withOpacity(0.05),
-  ),
+  cardTheme: CardThemeData(
+  color: Colors.white,
+  elevation: 1,
+  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  shadowColor: Color.fromRGBO(0, 0, 0, 0.05), // ✅ Fixed opacity
+),
   iconTheme: const IconThemeData(color: Color(0xFF5E5E5E)),
   dividerColor: Color(0xFFE0E0E0),
   useMaterial3: true,

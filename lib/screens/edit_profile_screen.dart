@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -115,7 +116,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
-                      Navigator.of(context, rootNavigator: true).pop();
+                      Navigator.pop(context);
                     }
                   },
                   child: Text(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme.dart';
 import 'login_screen.dart';
 import 'setting_p.dart';
 import 'edit_profile_screen.dart';
@@ -170,5 +171,3 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 }
-// Example usage:
-// final user = Provider.of<UserProvider>(context);

@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
 import '../widgets/app_drawer.dart';
-import '../services/recipe_service.dart';
-import '../models/recipe.dart';
-import 'recipe_detail_screen.dart';
+import '../theme.dart';
 
 class RecipeSearchScreen extends StatefulWidget {
   const RecipeSearchScreen({super.key});
@@ -14,54 +11,22 @@ class RecipeSearchScreen extends StatefulWidget {
 
 class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
   final TextEditingController _searchController = TextEditingController();
-  final RecipeService _recipeService = RecipeService();
+  final List<String> _allRecipes = [
+    'Mint Margarita',
+    'Alfredo Pasta',
+    'Caesar Salad',
+    'Beef Burger',
+    'Chicken Karahi',
+    'Chocolate Kunafa',
+  ];
   String _searchText = '';
-  Timer? _debounce;
-
-  List<TextSpan> highlightMatches(String text, String query) {
-    if (query.isEmpty) return [TextSpan(text: text)];
-    final matches = RegExp(RegExp.escape(query), caseSensitive: false).allMatches(text);
-
-    if (matches.isEmpty) return [TextSpan(text: text)];
-
-    final spans = <TextSpan>[];
-    int last = 0;
-
-    for (final match in matches) {
-      if (match.start > last) {
-        spans.add(TextSpan(text: text.substring(last, match.start)));
-      }
-      spans.add(TextSpan(
-        text: text.substring(match.start, match.end),
-        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple),
-      ));
-      last = match.end;
-    }
-
-    if (last < text.length) {
-      spans.add(TextSpan(text: text.substring(last)));
-    }
-
-    return spans;
-  }
-
-  void _onSearchChanged(String value) {
-    if (_debounce?.isActive ?? false) _debounce!.cancel();
-    _debounce = Timer(const Duration(milliseconds: 300), () {
-      setState(() {
-        _searchText = value.trim();
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _debounce?.cancel();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
+    final filteredRecipes = _allRecipes
+        .where((recipe) => recipe.toLowerCase().contains(_searchText.toLowerCase()))
+        .toList();
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -77,17 +42,15 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
             hintStyle: TextStyle(color: Theme.of(context).hintColor),
             border: InputBorder.none,
             suffixIcon: IconButton(
-              icon: const Icon(Icons.clear),
+              icon: const Icon(Icons.search),
               onPressed: () {
                 setState(() {
-                  _searchController.clear();
-                  _searchText = '';
+                  _searchText = _searchController.text.trim();
                 });
               },
             ),
           ),
           style: const TextStyle(color: Colors.black),
-          onChanged: _onSearchChanged,
           onSubmitted: (value) {
             setState(() {
               _searchText = value.trim();
@@ -117,102 +80,52 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
             ),
             const SizedBox(height: 12),
             Expanded(
-              child: StreamBuilder<List<Recipe>>(
-                stream: _recipeService.streamRecipes(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (snapshot.hasError) {
-                    return Center(child: Text('Error loading recipes: ${snapshot.error}'));
-                  }
-
-                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text('No recipes found.'));
-                  }
-
-                  final q = _searchText.toLowerCase();
-
-                  final filtered = snapshot.data!.where((r) {
-                    final title = r.title.toLowerCase();
-                    final ingredients = (r.ingredients ?? []).join(' ').toLowerCase();
-                    final instructions = (r.instructions ?? '').toLowerCase();
-                    return title.contains(q) || ingredients.contains(q) || instructions.contains(q);
-                  }).toList();
-
-                  if (filtered.isEmpty) {
-                    return const Center(child: Text('No matching recipes.'));
-                  }
-
-                  return GridView.builder(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 0.85,
-                    ),
-                    itemCount: filtered.length,
-                    itemBuilder: (context, index) {
-                      final recipe = filtered[index];
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => RecipeDetailScreen(recipe: recipe),
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 0.85,
+                ),
+                itemCount: filteredRecipes.length,
+                itemBuilder: (context, index) {
+                  final recipe = filteredRecipes[index];
+                  return Column(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(12),
+                            image: const DecorationImage(
+                              image: AssetImage('assets/images/placeholder.png'),
+                              fit: BoxFit.cover,
                             ),
-                          );
-                        },
-                        child: Column(
-                          children: [
-                            Expanded(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[200],
-                                  borderRadius: BorderRadius.circular(12),
-                                  image: DecorationImage(
-                                    image: recipe.imageUrl.isNotEmpty
-                                        ? NetworkImage(recipe.imageUrl)
-                                        : const AssetImage('assets/images/placeholder.png')
-                                            as ImageProvider,
-                                    fit: BoxFit.cover,
-                                    onError: (_, __) {},
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Container(
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                                borderRadius: const BorderRadius.only(
-                                  bottomLeft: Radius.circular(12),
-                                  bottomRight: Radius.circular(12),
-                                ),
-                              ),
-                              padding: const EdgeInsets.symmetric(vertical: 4),
-                              child: Center(
-                                child: RichText(
-                                  text: TextSpan(
-                                    children: highlightMatches(recipe.title, _searchText),
-                                    style: const TextStyle(
-                                      fontFamily: 'Poppins',
-                                      fontSize: 14,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
-                      );
-                    },
+                      ),
+                      Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                          borderRadius: const BorderRadius.only(
+                            bottomLeft: Radius.circular(12),
+                            bottomRight: Radius.circular(12),
+                          ),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Center(
+                          child: Text(
+                            recipe,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ),
+                    ],
                   );
                 },
               ),
-            ),
+            )
           ],
         ),
       ),

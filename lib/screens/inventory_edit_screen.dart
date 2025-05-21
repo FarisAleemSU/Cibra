@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import '../theme.dart';
 
 class InventoryEditScreen extends StatefulWidget {
   final List<Map<String, String>> initialItems;

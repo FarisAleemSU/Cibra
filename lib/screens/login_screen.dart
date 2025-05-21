@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'base_screen.dart';
 import 'package:flutter_application_1/services/authservices.dart';
+import '../theme.dart';
+import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,28 +17,33 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
 
-  void _handleLogin() async {
+  Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
+      try {
+        setState(() => _isLoading = true);
+        
+        final authService = AuthService();
+        final user = await authService.signIn(
+          _emailController.text,
+          _passwordController.text,
+        );
 
-      final authService = AuthService();
-      final success = await authService.login(
-        _emailController.text,
-        _passwordController.text,
-      );
-
-      if (mounted) {
-        if (success) {
+        if (user != null && mounted) {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (_) => const BaseScreen()),
           );
-        } else {
+        }
+      } catch (e) {
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Login failed')),
+            SnackBar(content: Text(e.toString())),
           );
         }
-        setState(() => _isLoading = false);
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
       }
     }
   }
@@ -75,8 +82,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your email';
                   }
-                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                      .hasMatch(value)) {
+                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
                     return 'Please enter a valid email';
                   }
                   return null;
@@ -126,14 +132,41 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                 ),
               ),
+              const SizedBox(height: 15),
               TextButton(
                 onPressed: () {
-                  // TODO: Implement forgot password
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SignupScreen()),
+                  );
+                },
+                child: RichText(
+                  text: TextSpan(
+                    text: 'Don’t have an account? ',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                    children: [
+                      TextSpan(
+                        text: 'Sign Up',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  // TODO: Implement password reset
                 },
                 child: Text(
                   'Forgot Password?',
-                  style:
-                      TextStyle(color: Theme.of(context).colorScheme.primary),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                 ),
               ),
             ],
@@ -143,6 +176,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-
-// Example usage:
-// final user = Provider.of<UserProvider>(context);

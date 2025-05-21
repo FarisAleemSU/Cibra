@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/app_drawer.dart';
-import '../services/recipe_service.dart';
-import '../models/recipe.dart';
-import 'recipe_detail_screen.dart';
+import '../theme.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,7 +10,12 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final RecipeService _recipeService = RecipeService();
+  final List<Map<String, dynamic>> _recipes = [
+    {'name': 'Pasta Carbonara', 'image': 'assets/images/PastaCarbonara.jpg'},
+    {'name': 'Chicken Curry', 'image': 'assets/images/istockphoto-579767430-612x612.jpg'},
+    {'name': 'Garden Salad', 'image': 'assets/images/228823-quick-beef-stir-fry-DDMFS-4x3-1f79b031d3134f02ac27d79e967dfef5.jpg'},
+    {'name': 'Beef Stir-Fry', 'image': 'assets/images/360_F_293220207_aSKIua6mTAymZDbIJOSOApeJ7vNoD6Zd.jpg'},
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -78,109 +81,48 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 12),
 
-              // Recipes Grid from Firestore
-              StreamBuilder<List<Recipe>>(
-                stream: _recipeService.streamRecipes(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text('No recipes available.'));
-                  }
-
-                  // Filter recipes by 'Easy' difficulty
-                  final recipes = snapshot.data!
-                      .where((r) => r.difficulty.toLowerCase() == 'easy')
-                      .toList();
-
-                  if (recipes.isEmpty) {
-                    return const Center(child: Text('No easy recipes available.'));
-                  }
-
-                  return GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: recipes.length,
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.8,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
+              // Grid of Recipe Cards (Better screen use)
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _recipes.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 0.8,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                ),
+                itemBuilder: (context, index) {
+                  return Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15.0),
                     ),
-                    itemBuilder: (context, index) {
-                      final recipe = recipes[index];
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => RecipeDetailScreen(recipe: recipe),
-                            ),
-                          );
-                        },
-                        child: Card(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15.0),
-                          ),
-                          elevation: 1,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ClipRRect(
-                                borderRadius: const BorderRadius.vertical(top: Radius.circular(15.0)),
-                                child: recipe.imageUrl.isNotEmpty
-                                    ? Image.network(
-                                        recipe.imageUrl,
-                                        height: 100,
-                                        width: double.infinity,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) => const Icon(Icons.broken_image),
-                                      )
-                                    : Container(
-                                        height: 100,
-                                        width: double.infinity,
-                                        color: Colors.grey[300],
-                                        child: const Icon(Icons.image_not_supported),
-                                      ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      recipe.title,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w500,
-                                        fontFamily: 'Poppins',
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.timer, size: 16, color: Colors.grey),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          recipe.time,
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            fontFamily: 'Poppins',
-                                            color: Colors.grey,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                    elevation: 1,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ClipRRect(
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(15.0)),
+                          child: Image.asset(
+                            _recipes[index]['image'],
+                            height: 100,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
                           ),
                         ),
-                      );
-                    },
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            _recipes[index]['name'],
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Poppins',
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   );
                 },
               ),
