@@ -38,6 +38,9 @@ class AuthService {
   Future<void> signOut() async {
     await _auth.signOut();
   }
+  Future<void> updateDisplayName(String displayName) async {
+    await _auth.currentUser?.updateDisplayName(displayName);
+  }
 
   // Check if user is logged in (using Firebase Auth)
   User? get currentUser => _auth.currentUser;
