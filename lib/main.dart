@@ -17,12 +17,20 @@ import 'screens/signup_screen.dart';
 import 'providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 import 'providers/recipe_provider.dart';
+import 'firebase_options.dart';
+
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => RecipeProvider()),
+        ChangeNotifierProvider(
+          create: (_) => AuthProvider(AuthService()),
+        )
         // Add other providers here
       ],
       child: const MyApp(),

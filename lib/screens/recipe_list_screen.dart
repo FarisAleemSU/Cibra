@@ -77,13 +77,13 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                 ),
               ),
             ),
-            ...favoriteRecipes.map((r) => _buildRecipeTile(r)).toList(),
+            ...favoriteRecipes.map((r) => _buildRecipeTile(r)),
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
               child: Divider(thickness: 1),
             ),
           ],
-          ...otherRecipes.map((r) => _buildRecipeTile(r)).toList(),
+          ...otherRecipes.map((r) => _buildRecipeTile(r)),
         ],
       ),
       floatingActionButton: FloatingActionButton(

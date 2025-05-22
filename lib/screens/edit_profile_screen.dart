@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme.dart';
+import '../providers/auth_provider.dart';
+import 'package:provider/provider.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -10,20 +12,43 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController(text: 'John Doe');
-  final _emailController = TextEditingController(text: 'john.doe@recipeapp.com');
-  final _bioController = TextEditingController();
+  late TextEditingController _nameController;
+  late TextEditingController _bioController;
+
+  @override
+  void initState() {
+    super.initState();
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    
+    // Initialize with current user data
+    _nameController = TextEditingController(text: authProvider.user?.displayName ?? '');
+    _bioController = TextEditingController(text: authProvider.userBio ?? '');
+  }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _emailController.dispose();
     _bioController.dispose();
     super.dispose();
+  }
+  Future<void> _updateProfile() async {
+    if (_formKey.currentState!.validate()) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      
+      // Update provider with new values
+      await authProvider.updateUserProfile(
+        displayName: _nameController.text,
+        bio: _bioController.text,
+      );
+      
+      if (mounted) Navigator.pop(context);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+     final authProvider = Provider.of<AuthProvider>(context);
+     final user = authProvider.user;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -76,29 +101,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Email (disabled)
-              TextFormField(
-                controller: _emailController,
-                enabled: false,
-                style: const TextStyle(color: Colors.grey),
-                decoration: const InputDecoration(
-                  labelText: 'Email (non-editable)',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 20),
-
               // Bio (updated)
-              TextFormField(
+               TextFormField(
                 controller: _bioController,
                 minLines: 3,
                 maxLines: 5,
                 decoration: const InputDecoration(
                   labelText: 'Bio',
                   border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                  hintText: 'Tell us about yourself...',
                 ),
-                style: const TextStyle(fontSize: 14),
               ),
 
               const SizedBox(height: 30),
@@ -114,13 +126,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      Navigator.pop(context);
-                    }
-                  },
+                  onPressed: _updateProfile,
                   child: Text(
-                    'Save',
+                    'Save Changes',
                     style: TextStyle(
                       fontSize: 16,
                       color: Theme.of(context).colorScheme.onPrimary,

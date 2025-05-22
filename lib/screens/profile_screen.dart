@@ -3,12 +3,18 @@ import '../theme.dart';
 import 'login_screen.dart';
 import 'setting_p.dart';
 import 'edit_profile_screen.dart';
+import '../providers/auth_provider.dart';
+import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final user = authProvider.user;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -33,28 +39,35 @@ class ProfileScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            _buildProfileHeader(context),
+            _buildProfileHeader(context, user), // Pass user here
             const SizedBox(height: 24),
             _buildStatsSection(context),
             const SizedBox(height: 24),
             _buildSettingsSection(context),
             const Spacer(),
-            _buildLogoutButton(context),
+            _buildLogoutButton(context, authProvider), // Pass authProvider
           ],
         ),
       ),
     );
   }
 
-  Widget _buildProfileHeader(BuildContext context) {
+
+  Widget _buildProfileHeader(BuildContext context, firebase_auth.User? user) {
+    String displayName = user?.displayName ?? 'User';
+    String email = user?.email ?? 'No email';
+    String initials = displayName.isNotEmpty 
+        ? displayName.split(' ').map((n) => n[0]).take(2).join()
+        : email[0].toUpperCase();
+
     return Row(
       children: [
         CircleAvatar(
           radius: 40,
           backgroundColor: Theme.of(context).colorScheme.primary,
-          child: const Text(
-            'JD',
-            style: TextStyle(fontSize: 24, color: Colors.white),
+          child: Text(
+            initials,
+            style: const TextStyle(fontSize: 24, color: Colors.white),
           ),
         ),
         const SizedBox(width: 20),
@@ -62,13 +75,13 @@ class ProfileScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'John Doe',
+              displayName,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
             ),
             Text(
-              'john.doe@recipeapp.com',
+              email,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Colors.grey.shade600,
                   ),
@@ -149,7 +162,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLogoutButton(BuildContext context) {
+   Widget _buildLogoutButton(BuildContext context, AuthProvider authProvider) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
@@ -161,6 +174,7 @@ class ProfileScreen extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 16),
         ),
         onPressed: () {
+          authProvider.signOut();
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -170,4 +184,4 @@ class ProfileScreen extends StatelessWidget {
       ),
     );
   }
-}
+  }
