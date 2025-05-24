@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/recipe.dart';
-import 'recipe_detail_screen.dart';
+import '../providers/recipe_provider.dart';
 import 'add_recipe.dart';
-import '../data/dummy_data.dart';
+import 'recipe_detail_screen.dart';
 
 class RecipeListScreen extends StatefulWidget {
   const RecipeListScreen({super.key});
@@ -12,41 +13,13 @@ class RecipeListScreen extends StatefulWidget {
 }
 
 class _RecipeListScreenState extends State<RecipeListScreen> {
-  List<Recipe> _recipes = [];
   bool _isDeleting = false;
 
   @override
-  void initState() {
-    super.initState();
-    _recipes = [...dummyRecipes];
-  }
-
-  void _addRecipe(Recipe recipe) {
-    setState(() {
-      _recipes.add(recipe);
-    });
-  }
-
-  void _toggleFavorite(String id) {
-    setState(() {
-      final index = _recipes.indexWhere((r) => r.id == id);
-      if (index != -1) {
-        final updated = _recipes[index].copyWith(isFavorite: !_recipes[index].isFavorite);
-        _recipes[index] = updated;
-      }
-    });
-  }
-
-  void _removeRecipe(String id) {
-    setState(() {
-      _recipes.removeWhere((r) => r.id == id);
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final favoriteRecipes = _recipes.where((r) => r.isFavorite).toList();
-    final otherRecipes = _recipes.where((r) => !r.isFavorite).toList();
+    final recipeProvider = Provider.of<RecipeProvider>(context);
+    final favoriteRecipes = recipeProvider.recipes.where((r) => r.isFavorite).toList();
+    final otherRecipes = recipeProvider.recipes.where((r) => !r.isFavorite).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -63,43 +36,47 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
           )
         ],
       ),
-      body: ListView(
-        children: [
-          if (favoriteRecipes.isNotEmpty) ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-              child: Text(
-                '❤️ Favorites',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
+      body: recipeProvider.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : ListView(
+              children: [
+                if (favoriteRecipes.isNotEmpty) ...[
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                    child: Text(
+                      '❤️ Favorites',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                  ...favoriteRecipes.map((r) => _buildRecipeTile(r, recipeProvider)),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Divider(thickness: 1),
+                  ),
+                ],
+                ...otherRecipes.map((r) => _buildRecipeTile(r, recipeProvider)),
+              ],
             ),
-            ...favoriteRecipes.map((r) => _buildRecipeTile(r)),
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: Divider(thickness: 1),
-            ),
-          ],
-          ...otherRecipes.map((r) => _buildRecipeTile(r)),
-        ],
-      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          final recipe = await Navigator.push(
+          final newRecipe = await Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const AddRecipeScreen()),
           );
-          if (recipe != null) _addRecipe(recipe);
+          if (newRecipe != null && newRecipe is Recipe) {
+            await recipeProvider.addRecipe(newRecipe);
+          }
         },
         child: const Icon(Icons.add),
       ),
     );
   }
 
-  Widget _buildRecipeTile(Recipe r) {
+  Widget _buildRecipeTile(Recipe r, RecipeProvider provider) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Card(
@@ -107,13 +84,25 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
         elevation: 1,
         child: ListTile(
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          leading: r.imageUrl.isNotEmpty
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    r.imageUrl,
+                    width: 60,
+                    height: 60,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const Icon(Icons.broken_image),
+                  ),
+                )
+              : const Icon(Icons.image),
           title: Text(
             r.title,
             style: const TextStyle(fontFamily: 'Poppins', fontSize: 16),
           ),
           onTap: () async {
             if (_isDeleting) {
-              final confirmed = await showDialog<bool>(
+              final confirm = await showDialog<bool>(
                 context: context,
                 builder: (_) => AlertDialog(
                   title: const Text('Delete Recipe'),
@@ -130,7 +119,7 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                   ],
                 ),
               );
-              if (confirmed == true) _removeRecipe(r.id);
+              if (confirm == true) await provider.deleteRecipe(r.id);
               return;
             }
 
@@ -141,10 +130,7 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
               ),
             );
             if (updated != null && updated is Recipe) {
-              setState(() {
-                final index = _recipes.indexWhere((el) => el.id == updated.id);
-                if (index != -1) _recipes[index] = updated;
-              });
+              await provider.updateRecipe(updated);
             }
           },
           trailing: IconButton(
@@ -152,7 +138,7 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
               r.isFavorite ? Icons.favorite : Icons.favorite_border,
               color: r.isFavorite ? Colors.red : Colors.grey,
             ),
-            onPressed: () => _toggleFavorite(r.id),
+            onPressed: () => provider.toggleFavorite(r.id),
           ),
         ),
       ),
