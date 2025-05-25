@@ -5,8 +5,13 @@ import 'dart:io';
 
 class RecipeDetailScreen extends StatefulWidget {
   final Recipe recipe;
+  final bool allowEdit; // ✅ NEW FLAG
 
-  const RecipeDetailScreen({super.key, required this.recipe});
+  const RecipeDetailScreen({
+    super.key,
+    required this.recipe,
+    this.allowEdit = true, // ✅ DEFAULT TRUE
+  });
 
   @override
   State<RecipeDetailScreen> createState() => _RecipeDetailScreenState();
@@ -38,22 +43,23 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
             ),
             actions: [
-              IconButton(
-                icon: const Icon(Icons.edit),
-                onPressed: () async {
-                  final updatedRecipe = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => EditRecipeScreen(recipe: _recipe),
-                    ),
-                  );
-                  if (updatedRecipe != null) {
-                    setState(() {
-                      _recipe = updatedRecipe;
-                    });
-                  }
-                },
-              )
+              if (widget.allowEdit) // ✅ SHOW EDIT BUTTON ONLY IF ALLOWED
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: () async {
+                    final updatedRecipe = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => EditRecipeScreen(recipe: _recipe),
+                      ),
+                    );
+                    if (updatedRecipe != null) {
+                      setState(() {
+                        _recipe = updatedRecipe;
+                      });
+                    }
+                  },
+                )
             ],
           ),
           SliverToBoxAdapter(
@@ -64,7 +70,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 children: [
                   _buildInfoRow(context),
                   const SizedBox(height: 10),
-                  _buildPublicStatusChip(context), // ✅ Added public/private status
+                  _buildPublicStatusChip(context),
                   const SizedBox(height: 20),
                   _buildSectionTitle(context, 'Ingredients'),
                   _buildIngredientsCard(context),
@@ -136,7 +142,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.4)),
+        border: Border.all(color: Theme.of(context).colorScheme.primary.withAlpha(102)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -161,9 +167,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: _recipe.isPublic
-              ? Colors.green.withOpacity(0.1)
-              : Colors.red.withOpacity(0.1),
+          color: _recipe.isPublic ? Colors.green.withAlpha(25) : Colors.red.withAlpha(25),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: _recipe.isPublic ? Colors.green : Colors.red,

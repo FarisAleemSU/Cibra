@@ -16,11 +16,11 @@ class _HomeScreenState extends State<HomeScreen> {
   final RecipeService _recipeService = RecipeService();
   final userId = FirebaseAuth.instance.currentUser?.uid;
 
-  int _selectedIndex = 0; // 0: My Recipes, 1: Public Recipes
+  int _selectedIndex = 0; // 0: Quick Recipes, 1: Saved Recipes
 
   @override
   Widget build(BuildContext context) {
-    final showPublic = _selectedIndex == 1;
+    final isSavedTab = _selectedIndex == 1;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -73,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Toggle Buttons for My vs Public Recipes
+              // Toggle Buttons
               Center(
                 child: ToggleButtons(
                   borderRadius: BorderRadius.circular(12),
@@ -86,11 +86,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: const [
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: Text('My Recipes'),
+                      child: Text('Quick Recipes'),
                     ),
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: Text('Public Recipes'),
+                      child: Text('Saved Recipes'),
                     ),
                   ],
                 ),
@@ -99,7 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               // Heading
               Text(
-                showPublic ? 'Explore Public Recipes' : 'Recipes You Can Make Now',
+                isSavedTab ? 'Your Saved Public Recipes' : 'Your Easy Recipes',
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -110,22 +110,36 @@ class _HomeScreenState extends State<HomeScreen> {
 
               // Recipes Grid
               StreamBuilder<List<Recipe>>(
-                stream: _recipeService.streamRecipes(filterPublic: showPublic, userId: userId),
+                stream: _recipeService.streamRecipes(filterPublic: true, userId: userId),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }
 
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Center(child: Text(showPublic ? 'No public recipes found.' : 'No recipes available.'));
+                    return Center(
+                      child: Text(isSavedTab
+                          ? 'No saved public recipes found.'
+                          : 'No recipes available.'),
+                    );
                   }
 
-                  final recipes = snapshot.data!
-                      .where((r) => r.difficulty.toLowerCase() == 'easy')
-                      .toList();
+                  // ✅ Apply proper filter logic
+                  final recipes = snapshot.data!.where((r) {
+                    if (isSavedTab) {
+                      return r.isPublic && r.savedBy.contains(userId);
+                    } else {
+                      return r.createdBy == userId &&
+                          r.difficulty.toLowerCase() == 'easy';
+                    }
+                  }).toList();
 
                   if (recipes.isEmpty) {
-                    return Center(child: Text(showPublic ? 'No easy public recipes.' : 'No easy recipes available.'));
+                    return Center(
+                      child: Text(isSavedTab
+                          ? 'No saved public recipes found.'
+                          : 'No easy recipes available.'),
+                    );
                   }
 
                   return GridView.builder(
@@ -145,9 +159,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => RecipeDetailScreen(recipe: recipe),
-                            ),
-                          );
+                              builder: (_) => RecipeDetailScreen(
+                                recipe: recipe,
+                                allowEdit: recipe.createdBy == userId, 
+                                ),
+                                ),
+                                );
                         },
                         child: Card(
                           shape: RoundedRectangleBorder(
@@ -158,20 +175,23 @@ class _HomeScreenState extends State<HomeScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               ClipRRect(
-                                borderRadius: const BorderRadius.vertical(top: Radius.circular(15.0)),
+                                borderRadius:
+                                    const BorderRadius.vertical(top: Radius.circular(15.0)),
                                 child: recipe.imageUrl.isNotEmpty
                                     ? Image.network(
                                         recipe.imageUrl,
                                         height: 100,
                                         width: double.infinity,
                                         fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) => const Icon(Icons.broken_image),
+                                        errorBuilder: (_, __, ___) =>
+                                            const Icon(Icons.broken_image),
                                       )
                                     : Container(
                                         height: 100,
                                         width: double.infinity,
                                         color: Colors.grey[300],
-                                        child: const Icon(Icons.image_not_supported),
+                                        child:
+                                            const Icon(Icons.image_not_supported),
                                       ),
                               ),
                               Padding(
@@ -190,7 +210,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                     const SizedBox(height: 4),
                                     Row(
                                       children: [
-                                        const Icon(Icons.timer, size: 16, color: Colors.grey),
+                                        const Icon(Icons.timer,
+                                            size: 16, color: Colors.grey),
                                         const SizedBox(width: 4),
                                         Text(
                                           recipe.time,
